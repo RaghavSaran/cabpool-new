@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CarpoolFinder</title>
+<title>CabpoolFinder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -408,7 +408,7 @@
 <!-- ── SCREEN 1: Entry Form ── -->
 <div class="page-wrap" id="form-page">
   <div class="card">
-    <div class="form-title">Find a Carpool</div>
+    <div class="form-title">Find a Carpool / Cabpool</div>
     <div class="form-sub">Enter your details and route to find the best travel companions nearby.</div>
 
     <div class="field">
@@ -419,7 +419,7 @@
 
     <div class="field">
       <label for="inp-mobile">Mobile Number</label>
-      <input type="tel" id="inp-mobile" placeholder="e.g. 9876543210" autocomplete="tel" inputmode="numeric" />
+      <input type="tel" id="inp-mobile" placeholder="e.g. 9876543210" autocomplete="tel" inputmode="numeric" maxlength="10" />
       <div class="err-msg" id="err-mobile">Please enter a valid mobile number.</div>
     </div>
 
@@ -440,7 +440,7 @@
     </div>
 
     <button class="btn-primary" id="search-btn" onclick="handleSearch()">
-      <span id="btn-label">Search Carpools</span>
+      <span id="btn-label">Search</span>
       <div class="spinner" id="btn-spinner"></div>
     </button>
   </div>
@@ -580,7 +580,7 @@ function validateForm() {
   const dstRaw = document.getElementById('inp-dest').value;
 
   if (!name) { showErr('name'); ok = false; }
-  if (!mobile || !/^\d{7,15}$/.test(mobile)) { showErr('mobile', 'Enter a valid mobile number (digits only).'); ok = false; }
+  if (!mobile || !/^\d{10}$/.test(mobile)) { showErr('mobile', 'Enter a valid 10-digit mobile number.'); ok = false; }
   const src = parseCoords(srcRaw);
   if (!src) { showErr('source'); ok = false; }
   const dst = parseCoords(dstRaw);
@@ -610,7 +610,7 @@ function setSearchLoading(loading) {
   const lbl = document.getElementById('btn-label');
   const spn = document.getElementById('btn-spinner');
   btn.disabled = loading;
-  lbl.textContent = loading ? 'Searching…' : 'Search Carpools';
+  lbl.textContent = loading ? 'Searching…' : 'Search';
   spn.classList.toggle('show', loading);
 }
 
@@ -805,6 +805,11 @@ function escHtml(s) {
 }
 
 // ─────────────────────────────────────────────
+// Strip non-digits and cap at 10 for mobile input
+document.getElementById('inp-mobile').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 10);
+});
+
 // Clear errors on input
 // ─────────────────────────────────────────────
 ['name','mobile','source','dest'].forEach(id => {
