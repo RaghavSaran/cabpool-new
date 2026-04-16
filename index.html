@@ -131,6 +131,15 @@
     margin-top: 4px;
     font-family: var(--mono);
   }
+  .coords-hint {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: var(--mono);
+    letter-spacing: 0.02em;
+    min-height: 0;
+    transition: opacity 0.2s;
+  }
   .field .err-msg {
     font-size: 12px;
     color: var(--red);
@@ -378,6 +387,27 @@
   }
   #toast.show { transform: translateX(-50%) translateY(0); }
 
+  /* ── Google Places autocomplete dropdown styling ── */
+  .pac-container {
+    font-family: var(--font);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    margin-top: 2px;
+    background: var(--surface);
+  }
+  .pac-item {
+    padding: 9px 14px;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+    border-top: 1px solid var(--border);
+  }
+  .pac-item:first-child { border-top: none; }
+  .pac-item:hover { background: var(--surface2); }
+  .pac-item-query { font-size: 14px; color: var(--text); }
+  .pac-matched { font-weight: 600; color: var(--accent); }
+
   /* ── Responsive ── */
   @media (max-width: 400px) {
     .page-wrap { padding: 20px 12px 60px; }
@@ -423,20 +453,20 @@
       <div class="err-msg" id="err-mobile">Please enter a valid mobile number.</div>
     </div>
 
-    <div class="section-label">Route Coordinates</div>
+    <div class="section-label">Route</div>
 
     <div class="field">
       <label for="inp-source">Source</label>
-      <input type="text" id="inp-source" placeholder="28.7383, 77.0822" inputmode="decimal" />
-      <div class="hint">Latitude, Longitude</div>
-      <div class="err-msg" id="err-source">Enter valid coordinates, e.g. 28.7383, 77.0822</div>
+      <input type="text" id="inp-source" placeholder="e.g. Connaught Place, Delhi" autocomplete="off" />
+      <div class="coords-hint" id="coords-source"></div>
+      <div class="err-msg" id="err-source">Please select a source location from the suggestions.</div>
     </div>
 
     <div class="field">
       <label for="inp-dest">Destination</label>
-      <input type="text" id="inp-dest" placeholder="28.5032, 77.0947" inputmode="decimal" />
-      <div class="hint">Latitude, Longitude</div>
-      <div class="err-msg" id="err-dest">Enter valid coordinates, e.g. 28.5032, 77.0947</div>
+      <input type="text" id="inp-dest" placeholder="e.g. Cyber City, Gurugram" autocomplete="off" />
+      <div class="coords-hint" id="coords-dest"></div>
+      <div class="err-msg" id="err-dest">Please select a destination location from the suggestions.</div>
     </div>
 
     <button class="btn-primary" id="search-btn" onclick="handleSearch()">
@@ -483,18 +513,60 @@
 let currentUser = null; // { name, mobile, srcLat, srcLng, dstLat, dstLng }
 
 // ─────────────────────────────────────────────
-// Coordinate parser — tolerant of extra spaces
+// Places Autocomplete init (called by Maps SDK)
 // ─────────────────────────────────────────────
-function parseCoords(raw) {
-  if (!raw) return null;
-  const cleaned = raw.trim().replace(/\s+/g, '');
-  const parts = cleaned.split(',');
-  if (parts.length !== 2) return null;
-  const lat = parseFloat(parts[0]);
-  const lng = parseFloat(parts[1]);
-  if (isNaN(lat) || isNaN(lng)) return null;
-  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
-  return { lat, lng };
+let srcCoords = null; // { lat, lng }
+let dstCoords = null;
+
+function initAutocomplete() {
+  const options = { fields: ['geometry', 'name', 'formatted_address'] };
+
+  const srcAC = new google.maps.places.Autocomplete(
+    document.getElementById('inp-source'), options
+  );
+  srcAC.addListener('place_changed', () => {
+    const place = srcAC.getPlace();
+    if (place.geometry) {
+      srcCoords = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng()
+      };
+      document.getElementById('coords-source').textContent =
+        `📍 ${srcCoords.lat.toFixed(6)}, ${srcCoords.lng.toFixed(6)}`;
+      clearErr('source');
+    } else {
+      srcCoords = null;
+      document.getElementById('coords-source').textContent = '';
+    }
+  });
+
+  const dstAC = new google.maps.places.Autocomplete(
+    document.getElementById('inp-dest'), options
+  );
+  dstAC.addListener('place_changed', () => {
+    const place = dstAC.getPlace();
+    if (place.geometry) {
+      dstCoords = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng()
+      };
+      document.getElementById('coords-dest').textContent =
+        `📍 ${dstCoords.lat.toFixed(6)}, ${dstCoords.lng.toFixed(6)}`;
+      clearErr('dest');
+    } else {
+      dstCoords = null;
+      document.getElementById('coords-dest').textContent = '';
+    }
+  });
+
+  document.getElementById('inp-source').addEventListener('input', () => {
+    srcCoords = null;
+    document.getElementById('coords-source').textContent = '';
+  });
+  document.getElementById('inp-dest').addEventListener('input', () => {
+    dstCoords = null;
+    document.getElementById('coords-dest').textContent = '';
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -576,18 +648,14 @@ function validateForm() {
   let ok = true;
   const name = document.getElementById('inp-name').value.trim();
   const mobile = document.getElementById('inp-mobile').value.trim();
-  const srcRaw = document.getElementById('inp-source').value;
-  const dstRaw = document.getElementById('inp-dest').value;
 
   if (!name) { showErr('name'); ok = false; }
   if (!mobile || !/^\d{10}$/.test(mobile)) { showErr('mobile', 'Enter a valid 10-digit mobile number.'); ok = false; }
-  const src = parseCoords(srcRaw);
-  if (!src) { showErr('source'); ok = false; }
-  const dst = parseCoords(dstRaw);
-  if (!dst) { showErr('dest'); ok = false; }
+  if (!srcCoords) { showErr('source', 'Please select a source location from the suggestions.'); ok = false; }
+  if (!dstCoords) { showErr('dest', 'Please select a destination location from the suggestions.'); ok = false; }
 
   if (!ok) return null;
-  return { name, mobile, src, dst };
+  return { name, mobile, src: srcCoords, dst: dstCoords };
 }
 
 // ─────────────────────────────────────────────
@@ -821,6 +889,8 @@ document.getElementById('inp-mobile').addEventListener('input', function() {
 document.getElementById('inp-dest')
   .addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
 </script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_G2pcL9OozBADDhPapWqA78YpiLdpq-4&libraries=places&callback=initAutocomplete" async defer></script>
 
 </body>
 </html>
