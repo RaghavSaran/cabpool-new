@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CarpoolFinder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #F5F3EE;
+    --surface:   #FFFFFF;
+    --surface2:  #F0EDE6;
+    --border:    #E2DDD4;
+    --text:      #1A1714;
+    --text2:     #6B6560;
+    --text3:     #9E9890;
+    --accent:    #2A6B4F;
+    --accent-lt: #EAF4EE;
+    --accent-dk: #1E4F3A;
+    --amber:     #B8630A;
+    --amber-lt:  #FDF3E7;
+    --red:       #B02020;
+    --red-lt:    #FCEAEA;
+    --radius:    14px;
+    --radius-sm: 8px;
+    --shadow:    0 2px 12px rgba(0,0,0,0.07);
+    --font:      'DM Sans', sans-serif;
+    --mono:      'DM Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    width: 100%;
+    padding: 18px 24px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 18px; height: 18px; }
+  .logo-text { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-text span { color: var(--accent); }
+
+  /* ── Page wrapper ── */
+  .page-wrap {
+    width: 100%;
+    max-width: 480px;
+    padding: 28px 16px 60px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ── Form ── */
+  .form-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    margin-bottom: 4px;
+  }
+  .form-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 11px 14px;
+    font-family: var(--font);
+    font-size: 15px;
+    color: var(--text);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input::placeholder { color: var(--text3); font-size: 14px; }
+  .field input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(42,107,79,0.12);
+    background: #fff;
+  }
+  .field input.error { border-color: var(--red); box-shadow: 0 0 0 3px rgba(176,32,32,0.10); }
+  .field .hint {
+    font-size: 11.5px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+  .field .err-msg {
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 4px;
+    display: none;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 20px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: -0.1px;
+  }
+  .btn-primary:hover { background: var(--accent-dk); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { background: var(--text3); cursor: not-allowed; transform: none; }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .spinner.show { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Results overlay ── */
+  #results-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #results-overlay.open { transform: translateX(0); }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    gap: 12px;
+  }
+  .results-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  .back-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text2);
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+  }
+  .back-btn:hover { color: var(--text); background: var(--surface2); }
+
+  .results-title-block { min-width: 0; }
+  .results-title {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .results-subtitle { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .refresh-btn:hover { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+  .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .refresh-icon {
+    width: 14px; height: 14px;
+    transition: transform 0.5s;
+  }
+  .refresh-icon.spinning { animation: spin 0.7s linear infinite; }
+
+  /* ── Result list ── */
+  .results-body {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+  }
+  .results-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 60px 20px;
+    color: var(--text2);
+    font-size: 14px;
+  }
+  .big-spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text2);
+  }
+  .no-results .no-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+  .no-results h3 { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .no-results p { font-size: 13px; line-height: 1.6; }
+
+  /* ── Match tile ── */
+  .match-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    animation: fadeUp 0.3s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .tile-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .tile-name { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; }
+  .tile-mobile { font-size: 13px; color: var(--text2); margin-top: 2px; font-family: var(--mono); }
+  .tile-ago { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+  .score-badge {
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+    font-family: var(--mono);
+  }
+  .score-high  { background: var(--accent-lt); color: var(--accent-dk); }
+  .score-mid   { background: var(--amber-lt);  color: var(--amber); }
+  .score-low   { background: var(--red-lt);    color: var(--red); }
+
+  .tile-divider { height: 1px; background: var(--border); margin: 10px 0; }
+
+  .maps-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+  .maps-link:hover { color: var(--accent-dk); text-decoration: underline; }
+  .maps-link svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--text);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: transform 0.25s;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Responsive ── */
+  @media (max-width: 400px) {
+    .page-wrap { padding: 20px 12px 60px; }
+    .card { padding: 18px; }
+    .results-body { padding: 16px 12px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     IMPORTANT: Replace the placeholder below
+     with your deployed Apps Script Web App URL
+     ══════════════════════════════════════════ -->
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzV-o2e2P7cRQEexyDN_aAusiJ-WvvfxIyEkUn7jUHDsu5WCOOs8Ki3O9n6qNkaA8mMuA/exec";
+</script>
+
+<header>
+  <div class="logo-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="5" r="2"/><path d="M12 7v5l3 3"/><path d="M5 17l2-4h10l2 4"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="16.5" cy="19" r="1.5"/>
+    </svg>
+  </div>
+  <div class="logo-text">Carpool<span>Finder</span></div>
+</header>
+
+<!-- ── SCREEN 1: Entry Form ── -->
+<div class="page-wrap" id="form-page">
+  <div class="card">
+    <div class="form-title">Find a Carpool</div>
+    <div class="form-sub">Enter your details and route to find the best travel companions nearby.</div>
+
+    <div class="field">
+      <label for="inp-name">Your Name</label>
+      <input type="text" id="inp-name" placeholder="e.g. Rahul Sharma" autocomplete="name" />
+      <div class="err-msg" id="err-name">Please enter your name.</div>
+    </div>
+
+    <div class="field">
+      <label for="inp-mobile">Mobile Number</label>
+      <input type="tel" id="inp-mobile" placeholder="e.g. 9876543210" autocomplete="tel" inputmode="numeric" />
+      <div class="err-msg" id="err-mobile">Please enter a valid mobile number.</div>
+    </div>
+
+    <div class="section-label">Route Coordinates</div>
+
+    <div class="field">
+      <label for="inp-source">Source</label>
+      <input type="text" id="inp-source" placeholder="28.7383, 77.0822" inputmode="decimal" />
+      <div class="hint">Latitude, Longitude</div>
+      <div class="err-msg" id="err-source">Enter valid coordinates, e.g. 28.7383, 77.0822</div>
+    </div>
+
+    <div class="field">
+      <label for="inp-dest">Destination</label>
+      <input type="text" id="inp-dest" placeholder="28.5032, 77.0947" inputmode="decimal" />
+      <div class="hint">Latitude, Longitude</div>
+      <div class="err-msg" id="err-dest">Enter valid coordinates, e.g. 28.5032, 77.0947</div>
+    </div>
+
+    <button class="btn-primary" id="search-btn" onclick="handleSearch()">
+      <span id="btn-label">Search Carpools</span>
+      <div class="spinner" id="btn-spinner"></div>
+    </button>
+  </div>
+</div>
+
+<!-- ── SCREEN 2: Results Overlay ── -->
+<div id="results-overlay">
+  <div class="results-header">
+    <div class="results-header-left">
+      <button class="back-btn" onclick="goBack()" title="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div class="results-title-block">
+        <div class="results-title">Best Matches</div>
+        <div class="results-subtitle" id="results-subtitle">Loading…</div>
+      </div>
+    </div>
+    <button class="refresh-btn" id="refresh-btn" onclick="handleRefresh()">
+      <svg class="refresh-icon" id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+  <div class="results-body" id="results-body">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────
+let currentUser = null; // { name, mobile, srcLat, srcLng, dstLat, dstLng }
+
+// ─────────────────────────────────────────────
+// Coordinate parser — tolerant of extra spaces
+// ─────────────────────────────────────────────
+function parseCoords(raw) {
+  if (!raw) return null;
+  const cleaned = raw.trim().replace(/\s+/g, '');
+  const parts = cleaned.split(',');
+  if (parts.length !== 2) return null;
+  const lat = parseFloat(parts[0]);
+  const lng = parseFloat(parts[1]);
+  if (isNaN(lat) || isNaN(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { lat, lng };
+}
+
+// ─────────────────────────────────────────────
+// Haversine distance (km)
+// ─────────────────────────────────────────────
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+            Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+            Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ─────────────────────────────────────────────
+// Compatibility score
+// Formula: (direct_dist * 100) / detour_dist
+// Higher = better (Alice is closer to Bob's path)
+// ─────────────────────────────────────────────
+function compatibility(me, other) {
+  const direct = haversine(me.srcLat, me.srcLng, me.dstLat, me.dstLng);
+  const detour = haversine(me.srcLat, me.srcLng, other.srcLat, other.srcLng)
+               + haversine(other.srcLat, other.srcLng, other.dstLat, other.dstLng)
+               + haversine(other.dstLat, other.dstLng, me.dstLat, me.dstLng);
+  if (detour === 0) return 0;
+  return (direct * 100) / detour;
+}
+
+// ─────────────────────────────────────────────
+// Maps URL builder
+// ─────────────────────────────────────────────
+function mapsUrl(srcLat, srcLng, dstLat, dstLng) {
+  return `https://www.google.com/maps/dir/?api=1&origin=${srcLat},${srcLng}&destination=${dstLat},${dstLng}&travelmode=driving`;
+}
+
+// ─────────────────────────────────────────────
+// "X minutes ago" helper
+// ─────────────────────────────────────────────
+function minutesAgo(timestampStr) {
+  try {
+    const ts = new Date(timestampStr);
+    const diffMs = Date.now() - ts.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'just now';
+    if (mins === 1) return '1 minute ago';
+    return `${mins} minutes ago`;
+  } catch(e) { return ''; }
+}
+
+// ─────────────────────────────────────────────
+// IST timestamp
+// ─────────────────────────────────────────────
+function nowIST() {
+  return new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' })
+    .replace(' ', 'T') + '+05:30';
+}
+
+// ─────────────────────────────────────────────
+// Validation
+// ─────────────────────────────────────────────
+function showErr(id, msg) {
+  const inp = document.getElementById('inp-' + id);
+  const err = document.getElementById('err-' + id);
+  inp.classList.add('error');
+  err.style.display = 'block';
+  if (msg) err.textContent = msg;
+}
+function clearErr(id) {
+  document.getElementById('inp-' + id).classList.remove('error');
+  document.getElementById('err-' + id).style.display = 'none';
+}
+function clearAllErrors() {
+  ['name','mobile','source','dest'].forEach(clearErr);
+}
+
+function validateForm() {
+  clearAllErrors();
+  let ok = true;
+  const name = document.getElementById('inp-name').value.trim();
+  const mobile = document.getElementById('inp-mobile').value.trim();
+  const srcRaw = document.getElementById('inp-source').value;
+  const dstRaw = document.getElementById('inp-dest').value;
+
+  if (!name) { showErr('name'); ok = false; }
+  if (!mobile || !/^\d{7,15}$/.test(mobile)) { showErr('mobile', 'Enter a valid mobile number (digits only).'); ok = false; }
+  const src = parseCoords(srcRaw);
+  if (!src) { showErr('source'); ok = false; }
+  const dst = parseCoords(dstRaw);
+  if (!dst) { showErr('dest'); ok = false; }
+
+  if (!ok) return null;
+  return { name, mobile, src, dst };
+}
+
+// ─────────────────────────────────────────────
+// Toast
+// ─────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, duration = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ─────────────────────────────────────────────
+// Set button loading state
+// ─────────────────────────────────────────────
+function setSearchLoading(loading) {
+  const btn = document.getElementById('search-btn');
+  const lbl = document.getElementById('btn-label');
+  const spn = document.getElementById('btn-spinner');
+  btn.disabled = loading;
+  lbl.textContent = loading ? 'Searching…' : 'Search Carpools';
+  spn.classList.toggle('show', loading);
+}
+
+// ─────────────────────────────────────────────
+// Main: handle Search button
+// ─────────────────────────────────────────────
+async function handleSearch() {
+  const v = validateForm();
+  if (!v) return;
+
+  currentUser = {
+    name: v.name,
+    mobile: v.mobile,
+    srcLat: v.src.lat,
+    srcLng: v.src.lng,
+    dstLat: v.dst.lat,
+    dstLng: v.dst.lng
+  };
+
+  setSearchLoading(true);
+  showResultsLoading();
+  openOverlay();
+
+  try {
+    const ts = nowIST();
+    const payload = {
+      action: 'submit',
+      name: currentUser.name,
+      mobile: currentUser.mobile,
+      source: `${currentUser.srcLat}, ${currentUser.srcLng}`,
+      destination: `${currentUser.dstLat}, ${currentUser.dstLng}`,
+      timestamp: ts
+    };
+
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+
+    if (!data.success) throw new Error(data.error || 'Server error');
+
+    renderResults(data.rows || []);
+  } catch(e) {
+    showToast('Could not connect. Check your network.');
+    closeOverlay();
+  } finally {
+    setSearchLoading(false);
+  }
+}
+
+// ─────────────────────────────────────────────
+// Refresh button
+// ─────────────────────────────────────────────
+async function handleRefresh() {
+  if (!currentUser) return;
+  const btn = document.getElementById('refresh-btn');
+  const icon = document.getElementById('refresh-icon');
+  btn.disabled = true;
+  icon.classList.add('spinning');
+  showResultsLoading();
+
+  try {
+    const ts = nowIST();
+    const payload = {
+      action: 'refresh',
+      name: currentUser.name,
+      mobile: currentUser.mobile,
+      source: `${currentUser.srcLat}, ${currentUser.srcLng}`,
+      destination: `${currentUser.dstLat}, ${currentUser.dstLng}`,
+      timestamp: ts
+    };
+
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+
+    if (!data.success) throw new Error(data.error || 'Server error');
+    renderResults(data.rows || []);
+    showToast('Updated!');
+  } catch(e) {
+    showToast('Refresh failed. Try again.');
+    renderResults([]); // show no-results gracefully
+  } finally {
+    btn.disabled = false;
+    icon.classList.remove('spinning');
+  }
+}
+
+// ─────────────────────────────────────────────
+// Render results
+// ─────────────────────────────────────────────
+function renderResults(rows) {
+  const body = document.getElementById('results-body');
+  const subtitle = document.getElementById('results-subtitle');
+
+  // Filter out self
+  const others = rows.filter(r =>
+    !(r.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase() &&
+      r.mobile.trim() === currentUser.mobile.trim())
+  );
+
+  if (others.length === 0) {
+    subtitle.textContent = 'No matches found';
+    body.innerHTML = `
+      <div class="no-results">
+        <div class="no-icon">🚗</div>
+        <h3>No other riders found</h3>
+        <p>No one else is looking for a carpool right now.<br>Share this app and try again in a bit!</p>
+      </div>`;
+    return;
+  }
+
+  // Compute compatibility scores
+  const scored = others.map(r => {
+    const other = {
+      srcLat: parseFloat(r.source.split(',')[0]),
+      srcLng: parseFloat(r.source.split(',')[1]),
+      dstLat: parseFloat(r.destination.split(',')[0]),
+      dstLng: parseFloat(r.destination.split(',')[1])
+    };
+    const score = compatibility(currentUser, other);
+    return { ...r, score, other };
+  }).sort((a, b) => b.score - a.score);
+
+  subtitle.textContent = `${scored.length} rider${scored.length !== 1 ? 's' : ''} found`;
+
+  body.innerHTML = scored.map((r, i) => {
+    const pct = Math.min(Math.round(r.score), 999);
+    const badgeClass = pct >= 70 ? 'score-high' : pct >= 40 ? 'score-mid' : 'score-low';
+    const url = mapsUrl(r.other.srcLat, r.other.srcLng, r.other.dstLat, r.other.dstLng);
+    const ago = minutesAgo(r.timestamp);
+    return `
+      <div class="match-tile" style="animation-delay:${i * 0.06}s">
+        <div class="tile-top">
+          <div>
+            <div class="tile-name">${escHtml(r.name)}</div>
+            <div class="tile-mobile">${escHtml(r.mobile)}</div>
+            <div class="tile-ago">${ago}</div>
+          </div>
+          <div class="score-badge ${badgeClass}">${pct}%</div>
+        </div>
+        <div class="tile-divider"></div>
+        <a class="maps-link" href="${url}" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+          </svg>
+          View route on Maps
+        </a>
+      </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// Show loading state in results
+// ─────────────────────────────────────────────
+function showResultsLoading() {
+  document.getElementById('results-subtitle').textContent = 'Loading…';
+  document.getElementById('results-body').innerHTML = `
+    <div class="results-loading">
+      <div class="big-spinner"></div>
+      <span>Finding your best matches…</span>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────
+// Overlay open/close
+// ─────────────────────────────────────────────
+function openOverlay() {
+  document.getElementById('results-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeOverlay() {
+  document.getElementById('results-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function goBack() {
+  closeOverlay();
+}
+
+// ─────────────────────────────────────────────
+// Escape HTML
+// ─────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────
+// Clear errors on input
+// ─────────────────────────────────────────────
+['name','mobile','source','dest'].forEach(id => {
+  document.getElementById('inp-' + id)
+    .addEventListener('input', () => clearErr(id));
+});
+
+// Enter key on last field triggers search
+document.getElementById('inp-dest')
+  .addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
+</script>
+
+</body>
+</html>
